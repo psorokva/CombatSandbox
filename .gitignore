@@ -1,0 +1,19 @@
+.vscode/
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.opensdf
+*.sdf
+
+# Rider
+.idea/
+
+# Build files
+*.VC.db
+*.VC.opendb
