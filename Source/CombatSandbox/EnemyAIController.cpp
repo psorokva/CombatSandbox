@@ -17,9 +17,12 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 
     UE_LOG(LogTemp, Warning, TEXT("EnemyAIController possessed: %s"), *InPawn->GetName());
 
-	GetWorld()->GetTimerManager().SetTimerForNextTick(
+	GetWorld()->GetTimerManager().SetTimer(
+		AITimerHandle,
 		this,
-		&AEnemyAIController::FindAndChasePlayer
+		&AEnemyAIController::UpdateAIState,
+		0.2f,
+		true
 	);
 }
 
@@ -36,4 +39,42 @@ void AEnemyAIController::FindAndChasePlayer()
     }
 
     MoveToActor(PlayerPawn);
+}
+
+void AEnemyAIController::UpdateAIState()
+{
+	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (!PlayerPawn)
+	{
+		CurrentState = EEnemyState::Idle;
+		return;
+	}
+
+	APawn* ControlledPawn = GetPawn();
+	if (!ControlledPawn)
+	{
+		return;
+	}
+
+	float DistanceToPlayer = FVector::Dist(ControlledPawn->GetActorLocation(), PlayerPawn->GetActorLocation());
+	if (DistanceToPlayer <= DetectionRange)
+	{
+		if (CurrentState != EEnemyState::Chasing)
+		{
+			CurrentState = EEnemyState::Chasing;
+
+			UE_LOG(LogTemp, Warning, TEXT("Enemy State: CHASING"));
+		}
+		MoveToActor(PlayerPawn);
+	}
+	else
+	{
+		if (CurrentState != EEnemyState::Idle)
+		{
+			CurrentState = EEnemyState::Idle;
+			UE_LOG(LogTemp, Warning, TEXT("Enemy State: IDLE"));
+		}
+		
+		StopMovement();
+	}
 }
