@@ -4,6 +4,7 @@
 #include "EnemyAIController.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/DamageType.h"
 #include "TimerManager.h"
 
 AEnemyAIController::AEnemyAIController()
@@ -43,6 +44,11 @@ void AEnemyAIController::FindAndChasePlayer()
 
 void AEnemyAIController::UpdateAIState()
 {
+	if (CurrentState == EEnemyState::Dead)
+	{
+		return;
+	}
+
 	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	if (!PlayerPawn)
 	{
@@ -57,11 +63,35 @@ void AEnemyAIController::UpdateAIState()
 	}
 
 	float DistanceToPlayer = FVector::Dist(ControlledPawn->GetActorLocation(), PlayerPawn->GetActorLocation());
-	if (DistanceToPlayer <= DetectionRange)
+	
+	if (DistanceToPlayer <= AttackRange)
+	{
+		if (CurrentState != EEnemyState::Attacking)
+		{
+			CurrentState = EEnemyState::Attacking;
+			StopMovement();
+			UE_LOG(LogTemp, Warning, TEXT("Enemy State: ATTACKING"));
+
+			AttackPlayer();
+
+			GetWorld()->GetTimerManager().SetTimer(
+				AttackTimerHandle,
+				this,
+				&AEnemyAIController::AttackPlayer,
+				AttackCooldown,
+				true
+			);
+		}
+
+		// Implement attack logic here
+	}
+	else if (DistanceToPlayer <= DetectionRange)
 	{
 		if (CurrentState != EEnemyState::Chasing)
 		{
 			CurrentState = EEnemyState::Chasing;
+
+			GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
 
 			UE_LOG(LogTemp, Warning, TEXT("Enemy State: CHASING"));
 		}
@@ -72,9 +102,32 @@ void AEnemyAIController::UpdateAIState()
 		if (CurrentState != EEnemyState::Idle)
 		{
 			CurrentState = EEnemyState::Idle;
+			GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
+			StopMovement();
 			UE_LOG(LogTemp, Warning, TEXT("Enemy State: IDLE"));
-		}
-		
-		StopMovement();
+		}	
 	}
+}
+
+void AEnemyAIController::AttackPlayer()
+{
+	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (!PlayerPawn)
+	{
+		return;
+	}
+	UGameplayStatics::ApplyDamage(PlayerPawn, AttackDamage, this, GetPawn(), UDamageType::StaticClass());
+
+	UE_LOG(LogTemp, Warning, TEXT("Enemy attacked player for %.1f damage"),	AttackDamage);
+}
+
+void AEnemyAIController::Die()
+{
+	CurrentState = EEnemyState::Dead;
+
+	StopMovement();
+	GetWorld()->GetTimerManager().ClearTimer(AITimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
+	
+	UE_LOG(LogTemp, Warning, TEXT("Enemy State: DEAD"));
 }

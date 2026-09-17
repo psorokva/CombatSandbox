@@ -28,14 +28,27 @@ protected:
 
 private:
 	void FindAndChasePlayer();
-
 	void UpdateAIState();
+	void AttackPlayer();
+
+	UFUNCTION(BlueprintCallable)
+	void Die();
 
 	UPROPERTY(EditAnywhere, Category = "AI")
 	float DetectionRange = 1500.0f;
 
+	UPROPERTY(EditAnywhere, Category = "AI")
+	float AttackRange = 150.0f;
+
+	UPROPERTY(EditAnywhere, Category = "AI")
+	float AttackDamage = 10.0f;
+
 	UPROPERTY(VisibleAnywhere, Category = "AI")
 	EEnemyState CurrentState = EEnemyState::Idle;
 
+	UPROPERTY(EditAnywhere, Category = "AI")
+	float AttackCooldown = 1.0f;
+
 	FTimerHandle AITimerHandle;
+	FTimerHandle AttackTimerHandle;
 };
