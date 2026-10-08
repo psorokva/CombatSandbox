@@ -6,6 +6,8 @@
 #include "AIController.h"
 #include "EnemyAIController.generated.h"
 
+class AEnemyCharacter;
+
 UENUM(BlueprintType)
 enum class EEnemyState : uint8
 {
@@ -34,6 +36,9 @@ private:
 	UFUNCTION(BlueprintCallable)
 	void Die();
 
+	UPROPERTY()
+	TObjectPtr<AEnemyCharacter> EnemyCharacter;
+
 	UPROPERTY(EditAnywhere, Category = "AI")
 	float DetectionRange = 1500.0f;
 
@@ -45,9 +50,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "AI")
 	EEnemyState CurrentState = EEnemyState::Idle;
-
-	UPROPERTY(EditAnywhere, Category = "AI")
-	float AttackCooldown = 1.0f;
 
 	FTimerHandle AITimerHandle;
 	FTimerHandle AttackTimerHandle;

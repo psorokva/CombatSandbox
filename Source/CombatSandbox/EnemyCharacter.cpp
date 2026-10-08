@@ -1,23 +1,35 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
+#include "EnemyAIController.h"
 #include "EnemyCharacter.h"
+#include "CombatComponent.h"
 
 // Sets default values
 AEnemyCharacter::AEnemyCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	//PrimaryActorTick.bCanEverTick = true;
+    AIControllerClass = AEnemyAIController::StaticClass();
 
+	CombatComponent = CreateDefaultSubobject<UCombatComponent>(
+		TEXT("CombatComponent")
+	);
 }
 
-void AEnemyCharacter::TakeDamage(float DamageAmount)
+float AEnemyCharacter::TakeDamage(
+    float DamageAmount,
+    const FDamageEvent& DamageEvent,
+    AController* EventInstigator,
+    AActor* DamageCauser)
 {
-	Health -= DamageAmount;
-	if (Health <= 0.0f)
-	{
-		Health = 0.0f;
-	}
+    Health -= DamageAmount;
+
+    if (Health <= 0.0f)
+    {
+        Health = 0.0f;
+    }
+
+    return DamageAmount;
 }
 
 // Called when the game starts or when spawned

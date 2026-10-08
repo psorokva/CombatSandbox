@@ -1,7 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "EnemyAIController.h"
+#include "EnemyCharacter.h"
+#include "CombatComponent.h"
+
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/DamageType.h"
@@ -15,6 +17,14 @@ AEnemyAIController::AEnemyAIController()
 void AEnemyAIController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
+
+	EnemyCharacter = Cast<AEnemyCharacter>(InPawn);
+
+	if (!EnemyCharacter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to cast possessed pawn to AEnemyCharacter"));
+		return;
+	}
 
     UE_LOG(LogTemp, Warning, TEXT("EnemyAIController possessed: %s"), *InPawn->GetName());
 
@@ -56,13 +66,13 @@ void AEnemyAIController::UpdateAIState()
 		return;
 	}
 
-	APawn* ControlledPawn = GetPawn();
-	if (!ControlledPawn)
+	//APawn* ControlledPawn = GetPawn();
+	if (!EnemyCharacter)
 	{
 		return;
 	}
 
-	float DistanceToPlayer = FVector::Dist(ControlledPawn->GetActorLocation(), PlayerPawn->GetActorLocation());
+	float DistanceToPlayer = FVector::Dist(EnemyCharacter->GetActorLocation(), PlayerPawn->GetActorLocation());
 	
 	if (DistanceToPlayer <= AttackRange)
 	{
@@ -71,20 +81,11 @@ void AEnemyAIController::UpdateAIState()
 			CurrentState = EEnemyState::Attacking;
 			StopMovement();
 			UE_LOG(LogTemp, Warning, TEXT("Enemy State: ATTACKING"));
-
-			AttackPlayer();
-
-			GetWorld()->GetTimerManager().SetTimer(
-				AttackTimerHandle,
-				this,
-				&AEnemyAIController::AttackPlayer,
-				AttackCooldown,
-				true
-			);
 		}
 
-		// Implement attack logic here
+		EnemyCharacter->CombatComponent->Attack(PlayerPawn);
 	}
+
 	else if (DistanceToPlayer <= DetectionRange)
 	{
 		if (CurrentState != EEnemyState::Chasing)
