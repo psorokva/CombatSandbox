@@ -1,17 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
+#include "AbilityDataAsset.h"
 #include "EnemyAIController.h"
 #include "EnemyCharacter.h"
 #include "CombatComponent.h"
 
 #include "Kismet/GameplayStatics.h"
-#include "GameFramework/Character.h"
-#include "GameFramework/DamageType.h"
 #include "TimerManager.h"
 
 AEnemyAIController::AEnemyAIController()
 {
-	UE_LOG(LogTemp, Warning, TEXT("EnemyAIController CREATED"));
 }
 
 void AEnemyAIController::OnPossess(APawn* InPawn)
@@ -26,7 +23,7 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 		return;
 	}
 
-    UE_LOG(LogTemp, Warning, TEXT("EnemyAIController possessed: %s"), *InPawn->GetName());
+    //UE_LOG(LogTemp, Warning, TEXT("EnemyAIController possessed: %s"), *InPawn->GetName());
 
 	GetWorld()->GetTimerManager().SetTimer(
 		AITimerHandle,
@@ -37,24 +34,14 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 	);
 }
 
-void AEnemyAIController::FindAndChasePlayer()
-{
-	UE_LOG(LogTemp, Warning, TEXT("FindAndChasePlayer CALLED"));
-
-    APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-
-    if (!PlayerPawn)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("PlayerPawn NOT FOUND"));
-        return;
-    }
-
-    MoveToActor(PlayerPawn);
-}
-
 void AEnemyAIController::UpdateAIState()
 {
 	if (CurrentState == EEnemyState::Dead)
+	{
+		return;
+	}
+
+	if (!EnemyCharacter)
 	{
 		return;
 	}
@@ -63,17 +50,47 @@ void AEnemyAIController::UpdateAIState()
 	if (!PlayerPawn)
 	{
 		CurrentState = EEnemyState::Idle;
+		StopMovement();
 		return;
 	}
 
-	//APawn* ControlledPawn = GetPawn();
-	if (!EnemyCharacter)
+	const UAbilityDataAsset* AbilityData = EnemyCharacter->GetPrimaryAbility();
+
+	if (!AbilityData)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Enemy has no PrimaryAbility assigned"));
 		return;
 	}
 
-	float DistanceToPlayer = FVector::Dist(EnemyCharacter->GetActorLocation(), PlayerPawn->GetActorLocation());
+	const FVector EnemyLocation = EnemyCharacter->GetActorLocation();
+	const FVector PlayerLocation = PlayerPawn->GetActorLocation();
+
+	float DistanceToPlayer = FVector::Dist(EnemyLocation, PlayerLocation);
+
+	const float AttackRange = AbilityData->AttackRange;
+	const float MinRange = AbilityData->MinRange;
+	const float DetectionRange = AbilityData->DetectionRange;
+
+	// Retreat when the player gets too close
+	if (MinRange > 0.0f && DistanceToPlayer < MinRange)
+	{
+		if (CurrentState != EEnemyState::Retreating) // TODO: fix running into walls
+		{
+			CurrentState = EEnemyState::Retreating;
+
+			const FVector RetreatDirection = (EnemyLocation - PlayerLocation).GetSafeNormal();
+
+			const FVector RetreatDestination = EnemyLocation + RetreatDirection * AbilityData->RetreatDistance;
+
+			MoveToLocation(RetreatDestination);
+
+			UE_LOG(LogTemp, Warning, TEXT("Enemy State: RETREATING"));
+		}
+
+		return;
+	}
 	
+	// Attack when within the ability's range
 	if (DistanceToPlayer <= AttackRange)
 	{
 		if (CurrentState != EEnemyState::Attacking)
@@ -83,10 +100,16 @@ void AEnemyAIController::UpdateAIState()
 			UE_LOG(LogTemp, Warning, TEXT("Enemy State: ATTACKING"));
 		}
 
-		EnemyCharacter->CombatComponent->Attack(PlayerPawn);
+		if (EnemyCharacter->CombatComponent)
+		{
+			EnemyCharacter->CombatComponent->Attack(PlayerPawn);
+		}
+
+		return;
 	}
 
-	else if (DistanceToPlayer <= DetectionRange)
+	// Chase while the player is detected
+	if (DistanceToPlayer <= DetectionRange)
 	{
 		if (CurrentState != EEnemyState::Chasing)
 		{
@@ -96,30 +119,20 @@ void AEnemyAIController::UpdateAIState()
 
 			UE_LOG(LogTemp, Warning, TEXT("Enemy State: CHASING"));
 		}
-		MoveToActor(PlayerPawn);
-	}
-	else
-	{
-		if (CurrentState != EEnemyState::Idle)
-		{
-			CurrentState = EEnemyState::Idle;
-			GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
-			StopMovement();
-			UE_LOG(LogTemp, Warning, TEXT("Enemy State: IDLE"));
-		}	
-	}
-}
 
-void AEnemyAIController::AttackPlayer()
-{
-	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	if (!PlayerPawn)
-	{
+		MoveToActor(PlayerPawn);
 		return;
 	}
-	UGameplayStatics::ApplyDamage(PlayerPawn, AttackDamage, this, GetPawn(), UDamageType::StaticClass());
-
-	UE_LOG(LogTemp, Warning, TEXT("Enemy attacked player for %.1f damage"),	AttackDamage);
+	
+	// Otherwise, return to idle
+	if (CurrentState != EEnemyState::Idle)
+	{
+		CurrentState = EEnemyState::Idle;
+		//GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
+		StopMovement();
+		UE_LOG(LogTemp, Warning, TEXT("Enemy State: IDLE"));
+	}	
+	
 }
 
 void AEnemyAIController::Die()

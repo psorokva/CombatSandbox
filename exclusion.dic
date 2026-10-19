@@ -1,0 +1,9 @@
+UCLASS
+UPROPERTY
+UFUNCTION
+USTRUCT
+UENUM
+GENERATED_BODY
+TObjectPtr
+BlueprintReadOnly
+BlueprintCallable

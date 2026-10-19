@@ -1,5 +1,8 @@
 [*.{cpp,h}]
 
+spelling_checkable_types = identifiers,comments
+spelling_exclusion_path = .\exclusion.dic
+
 # Naming convention rules (note: currently need to be ordered from more to less specific)
 
 cpp_naming_rule.aactor_prefixed.symbols                    = aactor_class

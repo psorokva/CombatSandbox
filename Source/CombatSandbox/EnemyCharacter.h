@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "AbilityDataAsset.h"
 #include "EnemyCharacter.generated.h"
 
 class UCombatComponent;
@@ -37,6 +38,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
 	float MaxHealth = 100.0f;
 
+private:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat",
+		meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UAbilityDataAsset> PrimaryAbility;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -44,4 +50,8 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UAbilityDataAsset* GetPrimaryAbility() const
+	{
+		return PrimaryAbility;
+	}
 };

@@ -1,5 +1,6 @@
 #include "CombatComponent.h"
-
+#include "AbilityDataAsset.h"
+#include "EnemyCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Actor.h"
 
@@ -8,16 +9,51 @@ UCombatComponent::UCombatComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+const UAbilityDataAsset* UCombatComponent::GetAbilityData() const
+{
+	const AEnemyCharacter* EnemyCharacter = Cast<AEnemyCharacter>(GetOwner());
+
+	if (!EnemyCharacter)
+	{
+		return nullptr;
+	}
+
+	return EnemyCharacter->GetPrimaryAbility();
+}
+
 void UCombatComponent::Attack(AActor* Target)
 {
+	AActor* OwnerActor = GetOwner();
+
+	if (!IsValid(OwnerActor) || !IsValid(Target))
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT("Attack aborted: invalid owner or target")
+		);
+		return;
+	}
+
 	if (!CanAttack(Target))
 	{
 		return;
 	}
 
+	const UAbilityDataAsset* AbilityData = GetAbilityData();
+
+	if (!AbilityData)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Enemy has no AbilityData assigned"));
+		return;
+	}
+
+	const float Damage = AbilityData->AttackDamage;
+	const float Cooldown = AbilityData->AttackCooldown;
+
 	UGameplayStatics::ApplyDamage(
 		Target,
-		AttackDamage,
+		Damage,
 		GetOwner()->GetInstigatorController(),
 		GetOwner(),
 		UDamageType::StaticClass()
@@ -29,7 +65,7 @@ void UCombatComponent::Attack(AActor* Target)
 		TEXT("%s attacked %s for %.1f damage"), 
 		*GetOwner()->GetName(), 
 		*Target->GetName(), 
-		AttackDamage
+		Damage
 	);
 
 
@@ -39,23 +75,33 @@ void UCombatComponent::Attack(AActor* Target)
 		AttackCooldownTimerHandle,
 		this,
 		&UCombatComponent::ResetAttackCooldown,
-		AttackCooldown,
+		Cooldown,
 		false
 	);
 }
 
 bool UCombatComponent::CanAttack(AActor* Target) const
 {
-	if (!Target || !GetOwner() || !bCanAttack) {
+	AActor* OwnerActor = GetOwner();
+
+	if (!IsValid(OwnerActor) || !IsValid(Target) || !bCanAttack)
+	{
+		return false;
+	}
+
+	const UAbilityDataAsset* AbilityData = GetAbilityData();
+
+	if (!AbilityData)
+	{
 		return false;
 	}
 
 	const float DistanceToTarget = FVector::Dist(
-		GetOwner()->GetActorLocation(), 
+		OwnerActor->GetActorLocation(),
 		Target->GetActorLocation()
 	);
 
-	return DistanceToTarget <= AttackRange;
+	return DistanceToTarget <= AbilityData->AttackRange;
 
 }
 
