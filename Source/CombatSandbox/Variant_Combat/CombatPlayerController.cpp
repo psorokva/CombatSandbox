@@ -13,6 +13,11 @@
 #include "CombatSandbox.h"
 #include "Widgets/Input/SVirtualJoystick.h"
 
+#include "EnemyCharacter.h"
+#include "GameFramework/Pawn.h"
+#include "EnhancedInputComponent.h"
+#include "DrawDebugHelpers.h"
+
 void ACombatPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -62,6 +67,19 @@ void ACombatPlayerController::SetupInputComponent()
 		}
 
 	}
+
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
+	{
+		if (AttackAction)
+		{
+			EnhancedInputComponent->BindAction(
+				AttackAction,
+				ETriggerEvent::Started,
+				this,
+				&ACombatPlayerController::PlayerAttack
+			);
+		}
+	}
 }
 
 void ACombatPlayerController::OnPossess(APawn* InPawn)
@@ -92,4 +110,89 @@ bool ACombatPlayerController::ShouldUseTouchControls() const
 {
 	// are we on a mobile platform? Should we force touch?
 	return SVirtualJoystick::ShouldDisplayTouchInterface() || bForceTouchControls;
+}
+
+void ACombatPlayerController::PlayerAttack()
+{
+	APawn* PlayerPawn = GetPawn();
+
+	if (!PlayerPawn)
+	{
+		UE_LOG(LogCombatSandbox, Warning, TEXT("Player Attack: did not find Player Pawn"));
+		return;
+	}
+
+	const FVector PlayerLocation = GetPawn()->GetActorLocation();
+
+	FVector AttackDirection = GetControlRotation().Vector();
+	AttackDirection.Z = 0.0f;
+	AttackDirection.Normalize();
+
+	const FVector Start = PlayerLocation + FVector(0.0f, 0.0f, 60.0f);
+
+	const FVector End = Start + AttackDirection * 200.0f;
+
+	FHitResult Hit;
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(PlayerPawn);
+
+	const bool bHit = GetWorld()->LineTraceSingleByChannel(
+		Hit,
+		Start,
+		End,
+		ECC_Visibility,
+		Params
+	);
+
+	DrawDebugLine(
+		GetWorld(),
+		Start,
+		End,
+		bHit ? FColor::Green : FColor::Red,
+		false,
+		5.0f,
+		0,
+		2.0f
+	);
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("Start: %s | End: %s"),
+		*Start.ToString(),
+		*End.ToString()
+	);
+
+	if (!bHit)
+	{
+		UE_LOG(LogCombatSandbox, Warning, TEXT("Player Attack: did not hit anything"));
+		return;
+	}
+	else {
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("Hit actor: %s | Hit component: %s | Location: %s"),
+			*GetNameSafe(Hit.GetActor()),
+			*GetNameSafe(Hit.GetComponent()),
+			*Hit.ImpactPoint.ToString()
+		);
+	}
+
+	AEnemyCharacter* Enemy = Cast<AEnemyCharacter>(Hit.GetActor());
+
+	if (!Enemy)
+	{
+		UE_LOG(LogCombatSandbox, Warning, TEXT("Player Attack: no enemy found"));
+		return;
+	}
+
+	UGameplayStatics::ApplyDamage(
+		Enemy,
+		10.0f,
+		this,
+		PlayerPawn,
+		UDamageType::StaticClass()
+	);
 }

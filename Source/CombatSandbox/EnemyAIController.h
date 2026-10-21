@@ -15,6 +15,7 @@ enum class EEnemyState : uint8
 	Chasing,
 	Attacking,
 	Retreating,
+	Healing,
 	Dead
 };
 

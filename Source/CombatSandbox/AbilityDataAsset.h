@@ -31,6 +31,15 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
 	float AttackCooldown = 2.0f;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
+	bool bPrimarilyHealer = false;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
+	float HealOthersAmount = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
+	float HealOthersCooldown = 2.0f;
+
 };
 
 

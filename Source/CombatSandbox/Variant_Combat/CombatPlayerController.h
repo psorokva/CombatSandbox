@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "InputAction.h"
 #include "CombatPlayerController.generated.h"
 
 class UInputMappingContext;
@@ -73,4 +74,8 @@ protected:
 	/** Returns true if the player should use UMG touch controls */
 	bool ShouldUseTouchControls() const;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> AttackAction;
+
+	void PlayerAttack();
 };

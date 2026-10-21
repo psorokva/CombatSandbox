@@ -70,6 +70,7 @@ void AEnemyAIController::UpdateAIState()
 	const float AttackRange = AbilityData->AttackRange;
 	const float MinRange = AbilityData->MinRange;
 	const float DetectionRange = AbilityData->DetectionRange;
+	const bool IsHealer = AbilityData->bPrimarilyHealer;
 
 	// Retreat when the player gets too close
 	if (MinRange > 0.0f && DistanceToPlayer < MinRange)
@@ -87,6 +88,20 @@ void AEnemyAIController::UpdateAIState()
 			UE_LOG(LogTemp, Warning, TEXT("Enemy State: RETREATING"));
 		}
 
+		return;
+	}
+
+	// Heal if healer and other enemy's health < full
+	if (IsHealer) // TODO Add DistanceToEnemy and health check?
+	{
+		if (CurrentState != EEnemyState::Healing)
+		{
+			CurrentState = EEnemyState::Healing;
+			StopMovement();
+			UE_LOG(LogTemp, Warning, TEXT("Enemy State: HEALING"));
+		}
+
+		// Add healing function here
 		return;
 	}
 	
