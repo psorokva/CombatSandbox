@@ -59,14 +59,14 @@ void UCombatComponent::Attack(AActor* Target)
 		UDamageType::StaticClass()
 	);
 
-	UE_LOG(
-		LogTemp, 
-		Warning, 
-		TEXT("%s attacked %s for %.1f damage"), 
-		*GetOwner()->GetName(), 
-		*Target->GetName(), 
-		Damage
-	);
+	//UE_LOG(
+	//	LogTemp, 
+	//	Warning, 
+	//	TEXT("%s attacked %s for %.1f damage"), 
+	//	*GetOwner()->GetName(), 
+	//	*Target->GetName(), 
+	//	Damage
+	//);
 
 
 	bCanAttack = false;

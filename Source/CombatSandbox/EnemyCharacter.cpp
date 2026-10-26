@@ -1,7 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
-#include "EnemyAIController.h"
 #include "EnemyCharacter.h"
+#include "EnemyAIController.h"
 #include "CombatComponent.h"
 
 // Sets default values
@@ -23,6 +22,8 @@ float AEnemyCharacter::TakeDamage(
 {
     Health -= DamageAmount;
 
+    UE_LOG(LogTemp, Warning, TEXT("Player Attack: hit enemy for %.1f damage. Enemy health: %.1f"), DamageAmount, Health);
+
     if (Health <= 0.0f)
     {
         Health = 0.0f;
@@ -35,16 +36,6 @@ float AEnemyCharacter::TakeDamage(
 void AEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-    //UE_LOG(
-    //    LogTemp,
-    //    Warning,
-    //    TEXT("Enemy BeginPlay: %s | Controller: %s"),
-    //    *GetName(),
-    //    GetController()
-    //    ? *GetController()->GetName()
-    //    : TEXT("None")
-    //);
 	
 }
 
