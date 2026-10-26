@@ -26,15 +26,13 @@ class COMBATSANDBOX_API AEnemyAIController : public AAIController
 
 public:
 	AEnemyAIController();
+	void HandleEnemyDeath();
 
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
 
 private:
 	void UpdateAIState();
-
-	UFUNCTION(BlueprintCallable)
-	void Die();
 
 	UPROPERTY()
 	TObjectPtr<AEnemyCharacter> EnemyCharacter;

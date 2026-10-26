@@ -150,13 +150,22 @@ void AEnemyAIController::UpdateAIState()
 	
 }
 
-void AEnemyAIController::Die()
-{
-	CurrentState = EEnemyState::Dead;
+//void AEnemyAIController::Die()
+//{
+//	CurrentState = EEnemyState::Dead;
+//
+//	StopMovement();
+//	GetWorld()->GetTimerManager().ClearTimer(AITimerHandle);
+//	GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
+//	
+//	UE_LOG(LogTemp, Warning, TEXT("Enemy State: DEAD"));
+//}
 
-	StopMovement();
+void AEnemyAIController::HandleEnemyDeath()
+{
 	GetWorld()->GetTimerManager().ClearTimer(AITimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
-	
+	StopMovement();
+	CurrentState = EEnemyState::Dead;
 	UE_LOG(LogTemp, Warning, TEXT("Enemy State: DEAD"));
 }

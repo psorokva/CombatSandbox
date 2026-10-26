@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilityDataAsset.h"
+#include "HealthComponent.h"
 #include "EnemyCharacter.generated.h"
 
 class UCombatComponent;
@@ -21,6 +22,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat")
 	TObjectPtr<UCombatComponent> CombatComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UHealthComponent> HealthComponent;
+
 	virtual float TakeDamage(
 		float DamageAmount,
 		const FDamageEvent& DamageEvent,
@@ -28,22 +32,6 @@ public:
 		AActor* DamageCauser
 	) override;
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
-	float Health = 100.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
-	float MaxHealth = 100.0f;
-
-private:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat",
-		meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UAbilityDataAsset> PrimaryAbility;
-
-public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -54,4 +42,19 @@ public:
 	{
 		return PrimaryAbility;
 	}
+
+	bool IsDead() const;
+
+	void Die();
+
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+private:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat",
+		meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UAbilityDataAsset> PrimaryAbility;
+
+	bool bDeathHandled = false;
 };

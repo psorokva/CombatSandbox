@@ -35,6 +35,14 @@ void UCombatComponent::Attack(AActor* Target)
 		return;
 	}
 
+	if (AEnemyCharacter* OwnerEnemy = Cast<AEnemyCharacter>(OwnerActor))
+	{
+		if (OwnerEnemy->IsDead())
+		{
+			return;
+		}
+	}
+
 	if (!CanAttack(Target))
 	{
 		return;
